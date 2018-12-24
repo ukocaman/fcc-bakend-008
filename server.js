@@ -3,12 +3,18 @@
 var express     = require('express');
 var bodyParser  = require('body-parser');
 var cors        = require('cors');
+const helmet = require('helmet')
+const mongoose = require('mongoose')
 
 var apiRoutes         = require('./routes/api.js');
 var fccTestingRoutes  = require('./routes/fcctesting.js');
 var runner            = require('./test-runner');
 
 var app = express();
+
+// app.use(helmet())
+app.use(helmet.noCache())
+app.use(helmet.hidePoweredBy({ setTo: 'PHP 4.2.0' }))
 
 app.use('/public', express.static(process.cwd() + '/public'));
 
@@ -37,7 +43,8 @@ app.use(function(req, res, next) {
 });
 
 //Start our server and tests!
-app.listen(process.env.PORT || 3000, function () {
+mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true })
+.then(() => app.listen(process.env.PORT || 3000, () => {
   console.log("Listening on port " + process.env.PORT);
   if(process.env.NODE_ENV==='test') {
     console.log('Running Tests...');
@@ -51,6 +58,7 @@ app.listen(process.env.PORT || 3000, function () {
       }
     }, 1500);
   }
-});
+}))
+.catch(e => console.log(e))
 
 module.exports = app; //for unit/functional testing
